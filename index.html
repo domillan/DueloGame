@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duelo de Palavras</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --text-main: #ffffff;
+            --target-color: #00e676; /* Verde Neon */
+            --forbidden-color: #ff1744; /* Vermelho Neon */
+            --btn-skip: #424242;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            padding: 15px;
+        }
+
+        /* --- CABEÇALHO --- */
+        header {
+            width: 100%;
+            max-width: 500px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+        }
+
+        h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: 1px; }
+        .counter { font-size: 0.9rem; color: #aaa; }
+
+        /* --- CARTÃO DO JOGO --- */
+        .game-card {
+            width: 100%;
+            max-width: 450px;
+            background-color: var(--card-bg);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        /* Metade Superior: ALVO */
+        .section-target {
+            background: linear-gradient(135deg, #1b5e20 0%, #004d40 100%);
+            padding: 30px 20px;
+            text-align: center;
+            border-bottom: 4px solid var(--bg-color);
+            position: relative;
+        }
+
+        .label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            opacity: 0.8;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .word-target {
+            font-size: 2.2rem;
+            font-weight: 900;
+            color: var(--target-color);
+            text-transform: uppercase;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        /* Metade Inferior: PROIBIDA */
+        .section-forbidden {
+            background: linear-gradient(135deg, #3e1c1c 0%, #4a1010 100%);
+            padding: 25px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .icon-ban {
+            font-size: 1.5rem;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        .word-forbidden {
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: var(--forbidden-color);
+            text-transform: uppercase;
+		text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+
+        }
+
+        /* --- BOTÕES --- */
+        .controls {
+            display: flex;
+            gap: 15px;
+            width: 100%;
+            max-width: 450px;
+            margin-bottom: 30px;
+        }
+
+        .btn {
+            flex: 1;
+            border: none;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: transform 0.1s;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn:active { transform: scale(0.95); }
+
+        .btn-skip {
+            background-color: var(--btn-skip);
+            box-shadow: 0 4px 0 #212121;
+        }
+
+        .btn-correct {
+            background-color: var(--target-color);
+            color: #003300;
+            box-shadow: 0 4px 0 #00b34a;
+        }
+
+        .btn-reset {
+            background: transparent;
+            border: 1px solid #555;
+            color: #777;
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            cursor: pointer;
+        }
+
+        /* --- HISTÓRICO --- */
+        .history-container {
+            width: 100%;
+            max-width: 450px;
+            border-top: 1px solid #333;
+            padding-top: 15px;
+        }
+
+        .history-title {
+            font-size: 0.85rem;
+            color: #888;
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background-color: #252525;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 0.9rem;
+        }
+
+        .h-words { display: flex; flex-direction: column; }
+        .h-main { font-weight: bold; color: white; }
+        .h-sub { font-size: 0.75rem; color: #777; }
+        
+        .status-indicator {
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .status-ok { color: var(--target-color); border: 1px solid var(--target-color); }
+        .status-fail { color: var(--forbidden-color); border: 1px solid var(--forbidden-color); }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .hidden { display: none; }
+        .game-over { text-align: center; padding: 40px; color: #888; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>DUELO DE PALAVRAS</h1>
+        <div class="counter">Restantes: <span id="count-val">--</span></div>
+        <button class="btn-reset" onclick="resetStorage()">🔄 Resetar</button>
+    </header>
+
+    <div id="game-area" style="width: 100%; display: flex; flex-direction: column; align-items: center;">
+        
+        <div class="game-card">
+            <div class="section-target">
+                <span class="label">Acerte esta palavra:</span>
+                <div class="word-target" id="word-target">...</div>
+            </div>
+            <div class="section-forbidden">
+                <span class="icon-ban">🚫 Palavra proibida:</span>
+                <div class="word-forbidden" id="word-forbidden">...</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-skip" onclick="handleResult(false)">
+                ✖ Pular / Errou
+            </button>
+            <button class="btn btn-correct" onclick="handleResult(true)">
+                ✔ Acertou
+            </button>
+        </div>
+
+    </div>
+
+    <div id="game-over" class="game-over hidden">
+        <h2>Fim das cartas!</h2>
+        <p>Você completou todas as 300 duplas.</p>
+    </div>
+
+    <div class="history-container">
+        <div class="history-title">Histórico da Sessão</div>
+        <div id="history-list" class="history-list">
+            </div>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'duelo_palavras_ids';
+
+        // 300 Duplas de Palavras (Alvo vs Proibida/Semelhante)
+        const db = [
+            {id:1, t:"Manteiga", f:"Margarina"}, {id:2, t:"Rio", f:"Lago"}, {id:3, t:"Tênis", f:"Sapato"}, 
+            {id:4, t:"Relógio", f:"Tempo"}, {id:5, t:"Amor", f:"Paixão"}, {id:6, t:"Carro", f:"Moto"},
+            {id:7, t:"Sol", f:"Lua"}, {id:8, t:"Garfo", f:"Faca"}, {id:9, t:"Cadeira", f:"Banco"},
+            {id:10, t:"Cama", f:"Sofá"}, {id:11, t:"Caderno", f:"Livro"}, {id:12, t:"Caneta", f:"Lápis"},
+            {id:13, t:"Computador", f:"Notebook"}, {id:14, t:"Celular", f:"Telefone"}, {id:15, t:"Televisão", f:"Cinema"},
+            {id:16, t:"Rádio", f:"Música"}, {id:17, t:"Violão", f:"Guitarra"}, {id:18, t:"Futebol", f:"Gol"},
+            {id:19, t:"Praia", f:"Mar"}, {id:20, t:"Piscina", f:"Água"}, {id:21, t:"Cachorro", f:"Gato"},
+            {id:22, t:"Leão", f:"Tigre"}, {id:23, t:"Elefante", f:"Girafa"}, {id:24, t:"Pássaro", f:"Avião"},
+            {id:25, t:"Peixe", f:"Pesca"}, {id:26, t:"Árvore", f:"Flor"}, {id:27, t:"Maçã", f:"Banana"},
+            {id:28, t:"Pão", f:"Bolo"}, {id:29, t:"Leite", f:"Café"}, {id:30, t:"Queijo", f:"Presunto"},
+            {id:31, t:"Arroz", f:"Feijão"}, {id:32, t:"Pizza", f:"Hambúrguer"}, {id:33, t:"Médico", f:"Hospital"},
+            {id:34, t:"Professor", f:"Escola"}, {id:35, t:"Polícia", f:"Ladrão"}, {id:36, t:"Bombeiro", f:"Fogo"},
+            {id:37, t:"Rei", f:"Rainha"}, {id:38, t:"Pai", f:"Mãe"}, {id:39, t:"Irmão", f:"Amigo"},
+            {id:40, t:"Casa", f:"Prédio"}, {id:41, t:"Porta", f:"Janela"}, {id:42, t:"Chave", f:"Cadeado"},
+            {id:43, t:"Mesa", f:"Jantar"}, {id:44, t:"Copo", f:"Garrafa"}, {id:45, t:"Prato", f:"Comida"},
+            {id:46, t:"Camisa", f:"Camiseta"}, {id:47, t:"Calça", f:"Bermuda"}, {id:48, t:"Tênis", f:"Meia"},
+            {id:49, t:"Chapéu", f:"Boné"}, {id:50, t:"Óculos", f:"Olhos"}, {id:51, t:"Anel", f:"Dedo"},
+            {id:52, t:"Colar", f:"Pescoço"}, {id:53, t:"Relógio", f:"Pulso"}, {id:54, t:"Dinheiro", f:"Cartão"},
+            {id:55, t:"Bolsa", f:"Mochila"}, {id:56, t:"Espelho", f:"Reflexo"}, {id:57, t:"Pente", f:"Escova"},
+            {id:58, t:"Sabonete", f:"Banho"}, {id:59, t:"Shampoo", f:"Cabelo"}, {id:60, t:"Toalha", f:"Secar"},
+            {id:61, t:"Escova de Dente", f:"Pasta"}, {id:62, t:"Travesseiro", f:"Dormir"}, {id:63, t:"Cobertor", f:"Frio"},
+            {id:64, t:"Ventilador", f:"Ar Condicionado"}, {id:65, t:"Geladeira", f:"Freezer"}, {id:66, t:"Fogão", f:"Micro-ondas"},
+            {id:67, t:"Lixo", f:"Lixeira"}, {id:68, t:"Vassoura", f:"Rodo"}, {id:69, t:"Pano", f:"Limpar"},
+            {id:70, t:"Balde", f:"Água"}, {id:71, t:"Martelo", f:"Prego"}, {id:72, t:"Chave de Fenda", f:"Parafuso"},
+            {id:73, t:"Tinta", f:"Pincel"}, {id:74, t:"Papel", f:"Tesoura"}, {id:75, t:"Cola", f:"Adesivo"},
+            {id:76, t:"Régua", f:"Medir"}, {id:77, t:"Borracha", f:"Apagar"}, {id:78, t:"Apontador", f:"Lápis"},
+            {id:79, t:"Mochila", f:"Escola"}, {id:80, t:"Lancheira", f:"Comida"}, {id:81, t:"Ônibus", f:"Metrô"},
+            {id:82, t:"Trem", f:"Trilho"}, {id:83, t:"Avião", f:"Aeroporto"}, {id:84, t:"Navio", f:"Barco"},
+            {id:85, t:"Bicicleta", f:"Pedal"}, {id:86, t:"Moto", f:"Capacete"}, {id:87, t:"Semáforo", f:"Sinal"},
+            {id:88, t:"Rua", f:"Avenida"}, {id:89, t:"Calçada", f:"Pedestre"}, {id:90, t:"Ponte", f:"Rio"},
+            {id:91, t:"Túnel", f:"Escuro"}, {id:92, t:"Montanha", f:"Morro"}, {id:93, t:"Vale", f:"Rio"},
+            {id:94, t:"Deserto", f:"Areia"}, {id:95, t:"Floresta", f:"Mata"}, {id:96, t:"Jardim", f:"Parque"},
+            {id:97, t:"Fazenda", f:"Sítio"}, {id:98, t:"Cidade", f:"Campo"}, {id:99, t:"País", f:"Estado"},
+            {id:100, t:"Planeta", f:"Terra"}, {id:101, t:"Estrela", f:"Céu"}, {id:102, t:"Nuvem", f:"Chuva"},
+            {id:103, t:"Raio", f:"Trovão"}, {id:104, t:"Vento", f:"Ar"}, {id:105, t:"Fogo", f:"Quente"},
+            {id:106, t:"Gelo", f:"Frio"}, {id:107, t:"Neve", f:"Branco"}, {id:108, t:"Verão", f:"Calor"},
+            {id:109, t:"Inverno", f:"Frio"}, {id:110, t:"Primavera", f:"Flor"}, {id:111, t:"Outono", f:"Folha"},
+            {id:112, t:"Dia", f:"Noite"}, {id:113, t:"Manhã", f:"Tarde"}, {id:114, t:"Hoje", f:"Amanhã"},
+            {id:115, t:"Ontem", f:"Passado"}, {id:116, t:"Segunda", f:"Domingo"}, {id:117, t:"Sábado", f:"Fim de Semana"},
+            {id:118, t:"Janeiro", f:"Ano Novo"}, {id:119, t:"Dezembro", f:"Natal"}, {id:120, t:"Feriado", f:"Folga"},
+            {id:121, t:"Férias", f:"Viagem"}, {id:122, t:"Trabalho", f:"Emprego"}, {id:123, t:"Salário", f:"Dinheiro"},
+            {id:124, t:"Chefe", f:"Patrão"}, {id:125, t:"Colega", f:"Amigo"}, {id:126, t:"Reunião", f:"Conversa"},
+            {id:127, t:"Email", f:"Carta"}, {id:128, t:"Senha", f:"Código"}, {id:129, t:"Wifi", f:"Internet"},
+            {id:130, t:"Site", f:"Google"}, {id:131, t:"Foto", f:"Imagem"}, {id:132, t:"Vídeo", f:"Filme"},
+            {id:133, t:"Câmera", f:"Lente"}, {id:134, t:"Fone", f:"Ouvido"}, {id:135, t:"Bateria", f:"Carregador"},
+            {id:136, t:"Tela", f:"Monitor"}, {id:137, t:"Mouse", f:"Teclado"}, {id:138, t:"Botão", f:"Apertar"},
+            {id:139, t:"Cabo", f:"Fio"}, {id:140, t:"Luz", f:"Lâmpada"}, {id:141, t:"Sombra", f:"Escuro"},
+            {id:142, t:"Cor", f:"Tinta"}, {id:143, t:"Azul", f:"Céu"}, {id:144, t:"Verde", f:"Mato"},
+            {id:145, t:"Vermelho", f:"Sangue"}, {id:146, t:"Amarelo", f:"Sol"}, {id:147, t:"Preto", f:"Branco"},
+            {id:148, t:"Cinza", f:"Prata"}, {id:149, t:"Rosa", f:"Menina"}, {id:150, t:"Roxo", f:"Uva"},
+            {id:151, t:"Ouro", f:"Prata"}, {id:152, t:"Ferro", f:"Metal"}, {id:153, t:"Pedra", f:"Rocha"},
+            {id:154, t:"Madeira", f:"Árvore"}, {id:155, t:"Plástico", f:"Garrafa"}, {id:156, t:"Vidro", f:"Quebrar"},
+            {id:157, t:"Tecido", f:"Roupa"}, {id:158, t:"Algodão", f:"Doce"}, {id:159, t:"Lã", f:"Ovelha"},
+            {id:160, t:"Couro", f:"Vaca"}, {id:161, t:"Pele", f:"Corpo"}, {id:162, t:"Osso", f:"Esqueleto"},
+            {id:163, t:"Sangue", f:"Veia"}, {id:164, t:"Coração", f:"Bater"}, {id:165, t:"Pulmão", f:"Ar"},
+            {id:166, t:"Estômago", f:"Barriga"}, {id:167, t:"Cérebro", f:"Cabeça"}, {id:168, t:"Dente", f:"Boca"},
+            {id:169, t:"Língua", f:"Gosto"}, {id:170, t:"Nariz", f:"Cheiro"}, {id:171, t:"Orelha", f:"Ouvir"},
+            {id:172, t:"Olho", f:"Ver"}, {id:173, t:"Mão", f:"Pegar"}, {id:174, t:"Pé", f:"Chutar"},
+            {id:175, t:"Perna", f:"Joelho"}, {id:176, t:"Braço", f:"Cotovelo"}, {id:177, t:"Dedo", f:"Unha"},
+            {id:178, t:"Cabelo", f:"Penteado"}, {id:179, t:"Barba", f:"Bigode"}, {id:180, t:"Sorriso", f:"Rir"},
+            {id:181, t:"Lágrima", f:"Chorar"}, {id:182, t:"Suor", f:"Calor"}, {id:183, t:"Fome", f:"Comer"},
+            {id:184, t:"Sede", f:"Beber"}, {id:185, t:"Sono", f:"Cansaço"}, {id:186, t:"Sonho", f:"Pesadelo"},
+            {id:187, t:"Doença", f:"Gripe"}, {id:188, t:"Remédio", f:"Farmácia"}, {id:189, t:"Vacina", f:"Agulha"},
+            {id:190, t:"Saúde", f:"Vida"}, {id:191, t:"Morte", f:"Fim"}, {id:192, t:"Anjo", f:"Demônio"},
+            {id:193, t:"Deus", f:"Céu"}, {id:194, t:"Igreja", f:"Padre"}, {id:195, t:"Casamento", f:"Noiva"},
+            {id:196, t:"Aniversário", f:"Bolo"}, {id:197, t:"Festa", f:"Balada"}, {id:198, t:"Música", f:"Dança"},
+            {id:199, t:"Show", f:"Palco"}, {id:200, t:"Teatro", f:"Ator"}, {id:201, t:"Circo", f:"Palhaço"},
+            {id:202, t:"Zoológico", f:"Jaula"}, {id:203, t:"Museu", f:"História"}, {id:204, t:"Biblioteca", f:"Silêncio"},
+            {id:205, t:"Estádio", f:"Torcida"}, {id:206, t:"Academia", f:"Peso"}, {id:207, t:"Shopping", f:"Loja"},
+            {id:208, t:"Mercado", f:"Compras"}, {id:209, t:"Padaria", f:"Pão"}, {id:210, t:"Açougue", f:"Carne"},
+            {id:211, t:"Restaurante", f:"Garçom"}, {id:212, t:"Hotel", f:"Quarto"}, {id:213, t:"Banco", f:"Fila"},
+            {id:214, t:"Correio", f:"Carta"}, {id:215, t:"Delegacia", f:"Polícia"}, {id:216, t:"Cadeia", f:"Preso"},
+            {id:217, t:"Tribunal", f:"Juiz"}, {id:218, t:"Prefeitura", f:"Prefeito"}, {id:219, t:"Voto", f:"Urna"},
+            {id:220, t:"Bandeira", f:"País"}, {id:221, t:"Hino", f:"Música"}, {id:222, t:"Guerra", f:"Paz"},
+            {id:223, t:"Soldado", f:"Exército"}, {id:224, t:"Arma", f:"Tiro"}, {id:225, t:"Bomba", f:"Explosão"},
+            {id:226, t:"Faca", f:"Cortar"}, {id:227, t:"Veneno", f:"Cobra"}, {id:228, t:"Perigo", f:"Cuidado"},
+            {id:229, t:"Socorro", f:"Ajuda"}, {id:230, t:"Grito", f:"Alto"}, {id:231, t:"Silêncio", f:"Quieto"},
+            {id:232, t:"Barulho", f:"Som"}, {id:233, t:"Música", f:"Canção"}, {id:234, t:"Dança", f:"Passo"},
+            {id:235, t:"Pintura", f:"Quadro"}, {id:236, t:"Desenho", f:"Lápis"}, {id:237, t:"Escultura", f:"Estátua"},
+            {id:238, t:"Poesia", f:"Rima"}, {id:239, t:"Livro", f:"Página"}, {id:240, t:"História", f:"Conto"},
+            {id:241, t:"Piada", f:"Graça"}, {id:242, t:"Mágica", f:"Truque"}, {id:243, t:"Jogo", f:"Videogame"},
+            {id:244, t:"Brinquedo", f:"Criança"}, {id:245, t:"Boneca", f:"Menina"}, {id:246, t:"Bola", f:"Chute"},
+            {id:247, t:"Pipa", f:"Vento"}, {id:248, t:"Balão", f:"Ar"}, {id:249, t:"Confete", f:"Carnaval"},
+            {id:250, t:"Máscara", f:"Fantasia"}, {id:251, t:"Fantasma", f:"Assombração"}, {id:252, t:"Bruxa", f:"Vassoura"},
+            {id:253, t:"Vampiro", f:"Sangue"}, {id:254, t:"Lobisomem", f:"Lua Cheia"}, {id:255, t:"Zumbi", f:"Cérebro"},
+            {id:256, t:"Monstro", f:"Medo"}, {id:257, t:"Herói", f:"Capa"}, {id:258, t:"Vilão", f:"Mal"},
+            {id:259, t:"Príncipe", f:"Sapo"}, {id:260, t:"Castelo", f:"Torre"}, {id:261, t:"Dragão", f:"Fogo"},
+            {id:262, t:"Espada", f:"Luta"}, {id:263, t:"Escudo", f:"Defesa"}, {id:264, t:"Coroa", f:"Cabeça"},
+            {id:265, t:"Trono", f:"Sentar"}, {id:266, t:"Ouro", f:"Riqueza"}, {id:267, t:"Tesouro", f:"Pirata"},
+            {id:268, t:"Mapa", f:"Local"}, {id:269, t:"Bússola", f:"Norte"}, {id:270, t:"Mala", f:"Roupa"},
+            {id:271, t:"Passaporte", f:"Viagem"}, {id:272, t:"Passagem", f:"Bilhete"}, {id:273, t:"Turista", f:"Foto"},
+            {id:274, t:"Guia", f:"Passeio"}, {id:275, t:"Lembrança", f:"Presente"}, {id:276, t:"Caixa", f:"Papelão"},
+            {id:277, t:"Pacote", f:"Correio"}, {id:278, t:"Selo", f:"Carta"}, {id:279, t:"Envelope", f:"Papel"},
+            {id:280, t:"Assinatura", f:"Nome"}, {id:281, t:"Caneta", f:"Tinta"}, {id:282, t:"Lápis", f:"Grafite"},
+            {id:283, t:"Giz", f:"Lousa"}, {id:284, t:"Quadro", f:"Negro"}, {id:285, t:"Carteira", f:"Escola"},
+            {id:286, t:"Nota", f:"Prova"}, {id:287, t:"Diploma", f:"Faculdade"}, {id:288, t:"Formatura", f:"Beca"},
+            {id:289, t:"Lição", f:"Casa"}, {id:290, t:"Dúvida", f:"Pergunta"}, {id:291, t:"Resposta", f:"Certa"},
+            {id:292, t:"Erro", f:"Falha"}, {id:293, t:"Acerto", f:"Ponto"}, {id:294, t:"Vitória", f:"Ganhar"},
+            {id:295, t:"Derrota", f:"Perder"}, {id:296, t:"Empate", f:"Igual"}, {id:297, t:"Campeão", f:"Troféu"},
+            {id:298, t:"Medalha", f:"Ouro"}, {id:299, t:"Recorde", f:"Mundo"}, {id:300, t:"Fim", f:"Acabou"}
+        ];
+
+        // --- VARIÁVEIS DE ESTADO ---
+        let playedIds = [];
+        let availablePairs = [];
+        let currentPair = null; // Vai guardar o objeto já sorteado (podendo ter t e f invertidos)
+
+        // Elementos DOM
+        const elTarget = document.getElementById('word-target');
+        const elForbidden = document.getElementById('word-forbidden');
+        const elCount = document.getElementById('count-val');
+        const elHistory = document.getElementById('history-list');
+        const elGameArea = document.getElementById('game-area');
+        const elGameOver = document.getElementById('game-over');
+
+        function init() {
+            // Carregar IDs já jogados
+            const stored = localStorage.getItem(STORAGE_KEY);
+            playedIds = stored ? JSON.parse(stored) : [];
+
+            calculateAvailable();
+            nextRound();
+        }
+
+        function calculateAvailable() {
+            availablePairs = db.filter(item => !playedIds.includes(item.id));
+            updateCounter();
+        }
+
+        function updateCounter() {
+            elCount.textContent = availablePairs.length;
+        }
+
+        function nextRound() {
+            if (availablePairs.length === 0) {
+                showGameOver();
+                return;
+            }
+
+            // Sorteio do par
+            const randomIndex = Math.floor(Math.random() * availablePairs.length);
+            const basePair = availablePairs[randomIndex];
+
+            // Sorteio da ordem (50% de chance de inverter)
+            const flip = Math.random() < 0.5;
+
+            // Cria um objeto temporário para esta rodada
+            currentPair = {
+                id: basePair.id,
+                t: flip ? basePair.t : basePair.f, // Se flip=true, t=t. Se false, t=f (inverte)
+                f: flip ? basePair.f : basePair.t
+            };
+
+            // Renderizar
+            elTarget.textContent = currentPair.t;
+            elForbidden.textContent = currentPair.f;
+        }
+
+        function handleResult(isCorrect) {
+            if (!currentPair) return;
+
+            // 1. Adicionar ao histórico visual
+            addToHistory(currentPair, isCorrect);
+
+            // 2. Salvar ID como jogado (salva o ID original do par, independente da ordem mostrada)
+            playedIds.push(currentPair.id);
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(playedIds));
+
+            // 3. Remover da lista local
+            availablePairs = availablePairs.filter(p => p.id !== currentPair.id);
+            updateCounter();
+
+            // 4. Próxima rodada
+            nextRound();
+        }
+
+        function addToHistory(pair, success) {
+            const item = document.createElement('div');
+            item.className = 'history-item';
+            
+            const wordsDiv = document.createElement('div');
+            wordsDiv.className = 'h-words';
+            
+            const mainSpan = document.createElement('span');
+            mainSpan.className = 'h-main';
+            mainSpan.textContent = pair.t;
+            
+            const subSpan = document.createElement('span');
+            subSpan.className = 'h-sub';
+            subSpan.textContent = `(Proibida: ${pair.f})`;
+
+            wordsDiv.appendChild(mainSpan);
+            wordsDiv.appendChild(subSpan);
+
+            const statusSpan = document.createElement('span');
+            if (success) {
+                statusSpan.className = 'status-indicator status-ok';
+                statusSpan.textContent = 'ACERTOU';
+            } else {
+                statusSpan.className = 'status-indicator status-fail';
+                statusSpan.textContent = 'PULOU';
+            }
+
+            item.appendChild(wordsDiv);
+            item.appendChild(statusSpan);
+
+            // Adicionar no topo
+            elHistory.prepend(item);
+        }
+
+        function resetStorage() {
+            if(confirm("Tem certeza? Isso apagará seu progresso e o histórico.")) {
+                localStorage.removeItem(STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        function showGameOver() {
+            elGameArea.classList.add('hidden');
+            elGameOver.classList.remove('hidden');
+        }
+
+        // Iniciar Jogo
+        init();
+
+    </script>
+</body>
+</html>
